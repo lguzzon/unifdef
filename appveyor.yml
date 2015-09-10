@@ -1,0 +1,12 @@
+version: 2.10.{build}
+configuration: Release
+before_build:
+- 'ECHO "@(#) $Version: unifdef-2.10-%build% $\n">version.h'
+- 'ECHO "@(#) $Date: 2014-01-07 19:16:02 +0000 $\n">>version.h'
+build:
+  parallel: true
+  verbosity: normal
+artifacts:
+- path: '**\*.exe'
+  name: unifdef
+  type: zip
