@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 - 2014 Tony Finch <dot@dotat.at>
+ * Copyright (c) 2002 - 2017 Tony Finch <dot@dotat.at>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -312,7 +312,8 @@ main(int argc, char *argv[])
 			break;
 		case 'M': /* modify in place and keep backup */
 			inplace = true;
-			backext = optarg;
+			if (strlen(optarg) > 0)
+				backext = optarg;
 			break;
 		case 'n': /* add #line directive after deleted lines */
 			lnnum = true;
@@ -847,12 +848,14 @@ parseline(void)
 		if (fgets(tline + len, MAXLINE - len, input) == NULL) {
 			if (ferror(input))
 				err(2, "can't read %s", filename);
-			/* append the missing newline at eof */
+			debug("parser insert newline at EOF", linenum);
 			strcpy(tline + len, newline);
 			cp += strlen(newline);
 			linestate = LS_START;
 		} else {
-			linestate = LS_DIRTY;
+			debug("parser concatenate dangling whitespace");
+			++linenum;
+			cp = skipcomment(cp);
 		}
 	}
 	if (retval != LT_PLAIN && (wascomment || linestate != LS_START)) {
@@ -917,6 +920,10 @@ static Linetype op_mul(long *p, Linetype at, long a, Linetype bt, long b) {
 	return op_strict(p, a * b, at, bt);
 }
 static Linetype op_div(long *p, Linetype at, long a, Linetype bt, long b) {
+	if (bt != LT_TRUE) {
+		debug("eval division by zero");
+		return (LT_ERROR);
+	}
 	return op_strict(p, a / b, at, bt);
 }
 static Linetype op_mod(long *p, Linetype at, long a, Linetype bt, long b) {
@@ -969,24 +976,24 @@ struct ops {
 	struct op op[5];
 };
 static const struct ops eval_ops[] = {
-	{ eval_table, { { "||", op_or } } },
-	{ eval_table, { { "&&", op_and } } },
-	{ eval_table, { { "|", op_bor, "|" } } },
-	{ eval_table, { { "^", op_bxor } } },
-	{ eval_table, { { "&", op_band, "&" } } },
-	{ eval_table, { { "==", op_eq },
-			{ "!=", op_ne } } },
-	{ eval_table, { { "<=", op_le },
-			{ ">=", op_ge },
-			{ "<", op_lt, "<=" },
-			{ ">", op_gt, ">=" } } },
-	{ eval_table, { { "<<", op_blsh },
-			{ ">>", op_brsh } } },
-	{ eval_table, { { "+", op_add },
-			{ "-", op_sub } } },
-	{ eval_unary, { { "*", op_mul },
-			{ "/", op_div },
-			{ "%", op_mod } } },
+	{ eval_table, { { "||", op_or,   NULL } } },
+	{ eval_table, { { "&&", op_and,  NULL } } },
+	{ eval_table, { { "|",  op_bor,  "|" } } },
+	{ eval_table, { { "^",  op_bxor, NULL } } },
+	{ eval_table, { { "&",  op_band, "&" } } },
+	{ eval_table, { { "==", op_eq,   NULL },
+			{ "!=", op_ne,   NULL } } },
+	{ eval_table, { { "<=", op_le,   NULL },
+			{ ">=", op_ge,   NULL },
+			{ "<",  op_lt,   "<=" },
+			{ ">",  op_gt,   ">=" } } },
+	{ eval_table, { { "<<", op_blsh, NULL },
+			{ ">>", op_brsh, NULL } } },
+	{ eval_table, { { "+",  op_add,  NULL },
+			{ "-",  op_sub,  NULL } } },
+	{ eval_unary, { { "*",  op_mul,  NULL },
+			{ "/",  op_div,  NULL },
+			{ "%",  op_mod,  NULL } } },
 };
 
 /* Current operator precedence level */
@@ -1114,7 +1121,7 @@ eval_table(const struct ops *ops, long *valp, const char **cpp)
 {
 	const struct op *op;
 	const char *cp;
-	long val;
+	long val = 0;
 	Linetype lt, rt;
 
 	debug("eval%d", prec(ops));
@@ -1621,7 +1628,7 @@ xstrdup(const char *start, const char *end)
 
 	if (end < start) abort(); /* bug */
 	n = (size_t)(end - start) + 1;
-	s = malloc(n);
+	s = (char *)malloc(n);
 	if (s == NULL)
 		err(2, "malloc");
 	snprintf(s, n, "%s", start);

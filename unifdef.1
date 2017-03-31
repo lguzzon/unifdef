@@ -1,6 +1,6 @@
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
-.\" Copyright (c) 2002 - 2013 Tony Finch <dot@dotat.at>.  All rights reserved.
+.\" Copyright (c) 2002 - 2015 Tony Finch <dot@dotat.at>.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Dave Yost. It was rewritten to support ANSI C by Tony Finch.
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 7, 2014
+.Dd December 3, 2015
 .Dt UNIFDEF 1 PRM
 .Os " "
 .Sh NAME
@@ -126,6 +126,7 @@ the operators
 .Ic < , <= , > , >= , == , != , & , ^ , \&| ,
 .Ic && , || ,
 and parenthesized expressions.
+Division by zero is treated as an unknown value.
 A kind of
 .Dq "short circuit"
 evaluation is used for the
@@ -181,9 +182,12 @@ utility understands just enough about C
 to know when one of the directives is inactive
 because it is inside
 a comment,
-or affected by a backslash-continued line.
+or cannot be evaluated because it is split by a backslash-continued line.
 It spots unusually-formatted preprocessor directives
-and knows when the layout is too odd for it to handle.
+and passes them through unchanged when the layout is too odd for it to handle.
+(See the
+.Sx BUGS
+section below.)
 .Pp
 A script called
 .Nm unifdefall
@@ -252,6 +256,11 @@ Object-like macro definitions (without arguments)
 are set to the given value.
 Function-like macro definitions (with arguments)
 are treated as if they are set to 1.
+.Pp
+.Em Warning:
+string literals and character constants are not parsed correctly in
+.Fl f
+files.
 .Pp
 .It Fl b
 Replace removed lines with blank lines
@@ -333,6 +342,11 @@ Modify input files in place, and keep backups of the original files by
 appending the
 .Ar backext
 to the input filenames.
+A zero length
+.Ar backext
+behaves the same as the
+.Fl m
+option.
 .Pp
 .It Fl n
 Add
@@ -474,16 +488,23 @@ command appeared in
 support was added in
 .Fx 4.7 .
 .Sh AUTHORS
+.An -nosplit
 The original implementation was written by
-.An Dave Yost Aq Dave@Yost.com .
-.An Tony Finch Aq dot@dotat.at
+.An Dave Yost Aq Mt Dave@Yost.com .
+.An Tony Finch Aq Mt dot@dotat.at
 rewrote it to support
 .Tn ANSI\~C .
 .Sh BUGS
 Expression evaluation is very limited.
 .Pp
-Handling one line at a time means
-preprocessor directives split across more than one physical line
+Character constants are not evaluated.
+String literals and character constants in
+.Fl f
+definition files are ignored rather than parsed as
+part of a macro's replacement tokens.
+.Pp
+Source files are processed one line at a time,
+so preprocessor directives split across more than one physical line
 (because of comments or backslash-newline)
 cannot be handled in every situation.
 .Pp

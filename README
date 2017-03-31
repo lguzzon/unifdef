@@ -11,9 +11,6 @@ Please see the INSTALL file for installation instructions.
 
 Pre-formatted documentation can be found in unifdef.txt
 
-You can subscribe to release announcements at:
-	http://freecode.com/projects/unifdef
-
 You can download the latest release tar and zip files from:
 	http://dotat.at/prog/unifdef
 
@@ -38,11 +35,17 @@ Jonathan Nieder <jrnieder@gmail.com>
 Anders H Kaseorg <andersk@mit.edu>
  - bug fixes and other improvements
 
+Ruediger Meier <ruediger.meier@ga-group.nl>
+ - build and portability cleanups
+
 Ben Hutchings at Solarflare Communications
  - lenient evaluation of && and ||
 
 Steve Underwood <steveu@coppice.org>
  - read #define and #undef directives from a file
+
+Brian Ginsbach <ginsbach@netbsd.org>
+ - improved expression evaluator
 
 Other contributions are listed in the Changelog.
 

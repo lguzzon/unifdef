@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 - 2014 Tony Finch <dot@dotat.at>
+ * Copyright (c) 2012 - 2015 Tony Finch <dot@dotat.at>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -22,6 +22,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+/* Stop being stupid about POSIX functions */
+#define _CRT_SECURE_NO_WARNINGS
+#define _SCL_SECURE_NO_WARNINGS
+#define _CRT_NONSTDC_NO_WARNINGS
 
 #include <ctype.h>
 #include <errno.h>
@@ -47,11 +52,17 @@
 /* used by err.c and getopt.c */
 #define _getprogname() "unifdef"
 
+/*
+ * The snprintf() workaround is unnecessary in Visual Studio 2015 or later
+ * but dogma dictates that #if directives are not allowed inside unifdef.
+ */
+#define snprintf c99_snprintf
+
 /* win32.c */
-int replace(const char *old, const char *new);
+int replace(const char *oldname, const char *newname);
 FILE *mktempmode(char *tmp, int mode);
 FILE *fbinmode(FILE *fp);
-int snprintf(char *buf, size_t buflen, const char *format, ...);
+int c99_snprintf(char *buf, size_t buflen, const char *format, ...);
 
 /* err.c */
 void err(int, const char *, ...);
